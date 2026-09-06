@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎸</text></svg>">
 <style>
 /* ============================================================
-   DESIGN TOKENS E TEMA (CLARO / ESCURO) — herdado do app irmão
+   DESIGN TOKENS E TEMA (CLARO / ESCURO)
    ============================================================ */
 :root {
   --bg-0: #0f1216; --bg-1: #171b21; --bg-2: #1e232b; --bg-3: #262c36;
@@ -131,7 +131,8 @@ input[type=range] { accent-color:var(--secondary); width:100%; cursor:pointer; }
 .note-dot.neutral { fill: var(--neutral-dot); stroke: var(--line); stroke-width: 1; }
 .note-dot.highlighted { stroke: #fff; stroke-width: 2; filter: drop-shadow(0 0 6px currentColor); }
 .note-label { font-family: var(--font-mono); font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none; user-select:none; }
-.note-label.on-dot { fill: #08090b; font-size: 11px; }
+/* Ajustado o tamanho da fonte para acomodar graus como 3b ou 7bb */
+.note-label.on-dot { fill: #08090b; font-size: 11px; letter-spacing: -0.3px; }
 [data-theme="light"] .note-label.on-dot { fill: #fff; }
 
 /* ---------------- Painel de resposta (modo Adivinhe) ---------------- */
@@ -166,6 +167,7 @@ input[type=range] { accent-color:var(--secondary); width:100%; cursor:pointer; }
 
   <div id="settings-overlay"></div>
 
+  <!-- ============================== SIDEBAR / OPÇÕES ============================== -->
   <aside id="settings">
     <div class="brand-header">
       <div class="brand"><span class="dot"></span><div><h1>Mapa do Braço — Baixo</h1></div></div>
@@ -184,10 +186,33 @@ input[type=range] { accent-color:var(--secondary); width:100%; cursor:pointer; }
       <div class="row">
         <label class="field-label" for="scaleSelect">Escala</label>
         <select id="scaleSelect">
-          <option value="major">Maior (Jônio)</option>
-          <option value="natural_minor">Menor Natural (Eólio)</option>
-          <option value="harmonic_minor">Menor Harmônica</option>
-          <option value="melodic_minor">Menor Melódica</option>
+          <optgroup label="Escala Maior (e Modos)">
+            <option value="major">Maior (Jônio)</option>
+            <option value="dorian">Dórico</option>
+            <option value="phrygian">Frígio</option>
+            <option value="lydian">Lídio</option>
+            <option value="mixolydian">Mixolídio</option>
+            <option value="natural_minor">Menor Natural (Eólio)</option>
+            <option value="locrian">Lócrio</option>
+          </optgroup>
+          <optgroup label="Menor Harmônica (e Modos)">
+            <option value="harmonic_minor">Menor Harmônica</option>
+            <option value="locrian_6">Lócrio 6M</option>
+            <option value="ionian_aug">Jônio Aumentado</option>
+            <option value="dorian_sharp4">Dórico #4</option>
+            <option value="phrygian_dom">Frígio Dominante</option>
+            <option value="lydian_sharp2">Lídio #2</option>
+            <option value="altered_bb7">Super Lócrio bb7</option>
+          </optgroup>
+          <optgroup label="Menor Melódica (e Modos)">
+            <option value="melodic_minor">Menor Melódica</option>
+            <option value="dorian_b2">Dórico b2</option>
+            <option value="lydian_aug">Lídio Aumentado</option>
+            <option value="lydian_dom">Lídio Dominante</option>
+            <option value="mixolydian_b6">Mixolídio b6</option>
+            <option value="half_dim">Lócrio 2M (Semi-diminuto)</option>
+            <option value="altered">Escala Alterada (Super Lócrio)</option>
+          </optgroup>
         </select>
       </div>
     </fieldset>
@@ -196,7 +221,7 @@ input[type=range] { accent-color:var(--secondary); width:100%; cursor:pointer; }
       <legend>Rótulo das Notas</legend>
       <div class="pillrow" id="labelModeRow">
         <span class="pill active" data-label="name">Nome da nota</span>
-        <span class="pill" data-label="degree">Grau (número)</span>
+        <span class="pill" data-label="degree">Grau / Intervalo</span>
       </div>
       <div class="hint">Define como as notas aparecem no modo Visualização.</div>
     </fieldset>
@@ -216,7 +241,7 @@ input[type=range] { accent-color:var(--secondary); width:100%; cursor:pointer; }
           <option value="allpositions">A nota em todas as posições</option>
         </select>
       </div>
-      <div class="hint" id="highlightHint">Uma única casa/corda é destacada; as demais ocorrências da mesma nota permanecem cinzas.</div>
+      <div class="hint" id="highlightHint">Uma única casa/corda é destacada; as demais ocorrências da mesma nota permanecem cinzas. <br><br><strong>Dica:</strong> Aperte <strong>Espaço</strong> para gerar uma nova nota, e os números <strong>1 a 7</strong> para responder.</div>
     </fieldset>
 
     <fieldset id="stringsFieldset">
@@ -236,6 +261,7 @@ input[type=range] { accent-color:var(--secondary); width:100%; cursor:pointer; }
 
   </aside>
 
+  <!-- ============================== ÁREA PRINCIPAL ============================== -->
   <main id="main">
     <div id="transport">
       <div class="mode-switch">
@@ -291,11 +317,34 @@ input[type=range] { accent-color:var(--secondary); width:100%; cursor:pointer; }
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const NOTE_NAMES_FLAT = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
 
-const SCALE_INTERVALS = {
-  major:          [0,2,4,5,7,9,11],
-  natural_minor:  [0,2,3,5,7,8,10],
-  harmonic_minor: [0,2,3,5,7,8,11],
-  melodic_minor:  [0,2,3,5,7,9,11],
+// Mapeamento completo de todos os modos com numeração de qualidade de intervalo
+const SCALES = {
+  // Modos da Escala Maior
+  major:          { intervals: [0,2,4,5,7,9,11], labels: ['1','2','3','4','5','6','7'] },
+  dorian:         { intervals: [0,2,3,5,7,9,10], labels: ['1','2','3b','4','5','6','7b'] },
+  phrygian:       { intervals: [0,1,3,5,7,8,10], labels: ['1','2b','3b','4','5','6b','7b'] },
+  lydian:         { intervals: [0,2,4,6,7,9,11], labels: ['1','2','3','4#','5','6','7'] },
+  mixolydian:     { intervals: [0,2,4,5,7,9,10], labels: ['1','2','3','4','5','6','7b'] },
+  natural_minor:  { intervals: [0,2,3,5,7,8,10], labels: ['1','2','3b','4','5','6b','7b'] },
+  locrian:        { intervals: [0,1,3,5,6,8,10], labels: ['1','2b','3b','4','5b','6b','7b'] },
+
+  // Modos da Menor Harmônica
+  harmonic_minor: { intervals: [0,2,3,5,7,8,11], labels: ['1','2','3b','4','5','6b','7'] },
+  locrian_6:      { intervals: [0,1,3,5,6,9,10], labels: ['1','2b','3b','4','5b','6','7b'] },
+  ionian_aug:     { intervals: [0,2,4,5,8,9,11], labels: ['1','2','3','4','5#','6','7'] },
+  dorian_sharp4:  { intervals: [0,2,3,6,7,9,10], labels: ['1','2','3b','4#','5','6','7b'] },
+  phrygian_dom:   { intervals: [0,1,4,5,7,8,10], labels: ['1','2b','3','4','5','6b','7b'] },
+  lydian_sharp2:  { intervals: [0,3,4,6,7,9,11], labels: ['1','2#','3','4#','5','6','7'] },
+  altered_bb7:    { intervals: [0,1,3,4,6,8,9], labels: ['1','2b','3b','4b','5b','6b','7bb'] },
+
+  // Modos da Menor Melódica
+  melodic_minor:  { intervals: [0,2,3,5,7,9,11], labels: ['1','2','3b','4','5','6','7'] },
+  dorian_b2:      { intervals: [0,1,3,5,7,9,10], labels: ['1','2b','3b','4','5','6','7b'] },
+  lydian_aug:     { intervals: [0,2,4,6,8,9,11], labels: ['1','2','3','4#','5#','6','7'] },
+  lydian_dom:     { intervals: [0,2,4,6,7,9,10], labels: ['1','2','3','4#','5','6','7b'] },
+  mixolydian_b6:  { intervals: [0,2,4,5,7,8,10], labels: ['1','2','3','4','5','6b','7b'] },
+  half_dim:       { intervals: [0,2,3,5,6,8,10], labels: ['1','2','3b','4','5b','6b','7b'] },
+  altered:        { intervals: [0,1,3,4,6,8,10], labels: ['1','2b','3b','4b','5b','6b','7b'] },
 };
 
 // cordas disponíveis (nota solta -> índice cromático 0-11, oitava relativa p/ ordenação)
@@ -351,7 +400,7 @@ const state = {
   answerType: 'name', // 'name' | 'degree'
 
   // rodada atual do modo Adivinhe
-  round: null, // { targetPc, targetDeg, anchorFret, highlightedPositions, attempts, solved }
+  round: null, // { targetPc, targetDegNum, targetDegLabel, anchorFret, highlightedPositions, attempts, solved }
 };
 
 function useFlatFor(keyPc){
@@ -360,14 +409,17 @@ function useFlatFor(keyPc){
 }
 
 function scalePitchClasses(){
-  const intervals = SCALE_INTERVALS[state.scale];
-  return intervals.map(i => (state.key + i) % 12);
+  return SCALES[state.scale].intervals.map(i => (state.key + i) % 12);
 }
 
-function degreeOfPc(pc){
+function getDegreeInfo(pc){
   const pcs = scalePitchClasses();
   const idx = pcs.indexOf(pc);
-  return idx === -1 ? null : idx + 1; // 1-based
+  if (idx === -1) return null;
+  return {
+    num: idx + 1, // 1-7 usado puramente para as cores
+    label: SCALES[state.scale].labels[idx] // String exata (ex: '3b', '4#')
+  };
 }
 
 /* ============================================================
@@ -443,9 +495,9 @@ fretCountSlider.addEventListener('input', () => {
 
 highlightModeSel.addEventListener('change', () => {
   state.highlightMode = highlightModeSel.value;
-  highlightHint.textContent = state.highlightMode === 'single'
-    ? 'Uma única casa/corda é destacada; as demais ocorrências da mesma nota permanecem cinzas.'
-    : 'Todas as ocorrências da nota-alvo no braço aparecem destacadas ao mesmo tempo.';
+  highlightHint.innerHTML = state.highlightMode === 'single'
+    ? 'Uma única casa/corda é destacada; as demais ocorrências da mesma nota permanecem cinzas. <br><br><strong>Dica:</strong> Aperte <strong>Espaço</strong> para gerar uma nova nota, e os números <strong>1 a 7</strong> para responder.'
+    : 'Todas as ocorrências da nota-alvo no braço aparecem destacadas ao mesmo tempo. <br><br><strong>Dica:</strong> Aperte <strong>Espaço</strong> para gerar uma nova nota, e os números <strong>1 a 7</strong> para responder.';
   if (state.mode === 'guess') startNewRound();
 });
 
@@ -512,12 +564,10 @@ function el(tag, attrs){
 }
 
 const DEGREE_VARS = ['--deg-1','--deg-2','--deg-3','--deg-4','--deg-5','--deg-6','--deg-7'];
-function colorForDegree(deg){
-  return getComputedStyle(document.documentElement).getPropertyValue(DEGREE_VARS[deg-1]).trim();
+function colorForDegree(degNum){
+  return getComputedStyle(document.documentElement).getPropertyValue(DEGREE_VARS[degNum-1]).trim();
 }
 
-// geo.minFret / geo.maxFret definem a JANELA VISÍVEL (inclusive). A casa 0 (solta)
-// só aparece desenhada com o "nut" quando minFret === 0.
 function fretboardGeometry(minFret, maxFret){
   if (minFret === undefined) minFret = 0;
   if (maxFret === undefined) maxFret = state.fretCount;
@@ -536,9 +586,6 @@ function fretboardGeometry(minFret, maxFret){
 
 function fretX(geo, fret){ return geo.leftPad + geo.fretW * (fret - geo.minFret); }
 function stringDrawIndex(sIdx, nStrings){
-  // sIdx é o índice em state.strings (0 = mais grave da seleção).
-  // Padrão (flipStrings=false): grave embaixo -> índice de desenho maior = mais embaixo.
-  // Então a linha desenhada de cima pra baixo deve ir da mais aguda pra mais grave.
   return state.flipStrings ? sIdx : (nStrings - 1 - sIdx);
 }
 function stringY(geo, sIdx){
@@ -553,7 +600,6 @@ const DOUBLE_MARKER_FRETS = new Set([12,24]);
 function drawFretboardBase(geo){
   svg.setAttribute('viewBox', `0 0 ${geo.width} ${geo.height}`);
   const stringStartX = geo.showOpenString ? geo.leftPad - 14 : geo.leftPad;
-  // fret lines
   for (let f=geo.minFret; f<=geo.maxFret; f++){
     const x = fretX(geo,f);
     const line = el('line',{x1:x,y1:geo.topPad-10,x2:x,y2:geo.topPad+geo.boardH+10,
@@ -565,7 +611,6 @@ function drawFretboardBase(geo){
       svg.appendChild(lbl);
     }
   }
-  // inlays
   for (let f=geo.minFret+1; f<=geo.maxFret; f++){
     const cx = fretX(geo,f) - geo.fretW/2;
     const cy = geo.topPad + geo.boardH/2;
@@ -576,12 +621,10 @@ function drawFretboardBase(geo){
       svg.appendChild(el('circle',{cx, cy, r:5, class:'inlay'}));
     }
   }
-  // strings
   for (let s=0; s<geo.nStrings; s++){
     const y = stringY(geo, s);
-    const thickness = 1.4 + s * 0.6; // s=0 é a mais grave da seleção -> mais grossa
+    const thickness = 1.4 + s * 0.6;
     svg.appendChild(el('line',{x1:stringStartX, y1:y, x2:geo.leftPad+geo.boardW, y2:y, class:'string-line', 'stroke-width': thickness}));
-    // nome da corda: à esquerda da pestana quando visível, senão à esquerda da 1ª casa exibida
     const labelX = geo.showOpenString ? geo.leftPad - 24 : geo.leftPad - 12;
     const label = el('text',{x:labelX, y, class:'fret-num-label', 'text-anchor':'middle', 'dominant-baseline':'central'});
     label.textContent = STRING_DEFS[state.strings[s]].name;
@@ -605,22 +648,21 @@ function renderVisualMode(){
     for (let f=geo.minFret; f<=geo.maxFret; f++){
       const midi = midiAt(s,f);
       const pc = pcOf(midi);
-      const deg = degreeOfPc(pc);
-      if (deg === null) continue;
+      const degInfo = getDegreeInfo(pc);
+      if (degInfo === null) continue;
       const x = f===0 ? geo.leftPad - 14 : fretX(geo,f) - geo.fretW/2;
-      const color = colorForDegree(deg);
-      const r = 13;
+      const color = colorForDegree(degInfo.num);
+      const r = 14;
       const dot = el('circle',{cx:x, cy:y, r, class:'note-dot', fill:color, stroke:'rgba(0,0,0,.3)', 'stroke-width':1});
       svg.appendChild(dot);
       const txt = el('text',{x, y, class:'note-label on-dot'});
-      txt.textContent = state.labelMode === 'name' ? noteNameFromMidi(midi, flat) : deg;
+      txt.textContent = state.labelMode === 'name' ? noteNameFromMidi(midi, flat) : degInfo.label;
       svg.appendChild(txt);
     }
   }
 }
 
 /* ---------------- Modo Adivinhe ---------------- */
-// Busca posições da escala em TODO o braço (0..MAX_FRET), independente da janela visível.
 function allScalePositions(minFret, maxFret){
   if (minFret === undefined) minFret = 0;
   if (maxFret === undefined) maxFret = MAX_FRET;
@@ -630,15 +672,13 @@ function allScalePositions(minFret, maxFret){
     for (let f=minFret; f<=maxFret; f++){
       const midi = midiAt(s,f);
       const pc = pcOf(midi);
-      const deg = degreeOfPc(pc);
-      if (deg !== null) positions.push({stringIdx:s, fret:f, midi, pc, deg});
+      const degInfo = getDegreeInfo(pc);
+      if (degInfo !== null) positions.push({stringIdx:s, fret:f, midi, pc, degNum: degInfo.num, degLabel: degInfo.label});
     }
   }
   return positions;
 }
 
-// Calcula a janela [minFret, maxFret] de tamanho state.fretCount que melhor
-// centraliza a casa-alvo, sem nunca sair do intervalo [0, MAX_FRET].
 function windowAroundFret(targetFret){
   const size = state.fretCount;
   let minFret = Math.round(targetFret - size/2);
@@ -648,7 +688,6 @@ function windowAroundFret(targetFret){
 }
 
 function startNewRound(){
-  // Geração sempre considera o braço INTEIRO, não a janela visível atual.
   const positions = allScalePositions(0, MAX_FRET);
   if (positions.length === 0){ return; }
   const chosen = positions[Math.floor(Math.random()*positions.length)];
@@ -661,7 +700,8 @@ function startNewRound(){
   const { minFret, maxFret } = windowAroundFret(chosen.fret);
   state.round = {
     targetPc: chosen.pc,
-    targetDeg: chosen.deg,
+    targetDegNum: chosen.degNum,
+    targetDegLabel: chosen.degLabel,
     anchorFret: chosen.fret,
     windowMin: minFret,
     windowMax: maxFret,
@@ -688,11 +728,12 @@ function buildAnswerButtons(){
       noteBtnGrid.appendChild(btn);
     });
   } else {
-    const pcs = scalePitchClasses();
-    pcs.forEach((pc, i) => {
+    const scaleDef = SCALES[state.scale];
+    scaleDef.labels.forEach((label, i) => {
+      const pc = (state.key + scaleDef.intervals[i]) % 12;
       const btn = document.createElement('button');
       btn.className = 'note-btn';
-      btn.textContent = (i+1);
+      btn.textContent = label;
       btn.addEventListener('click', () => submitAnswer({type:'degree', pc}));
       noteBtnGrid.appendChild(btn);
     });
@@ -715,7 +756,7 @@ function submitAnswer(answer){
 function describeTarget(){
   const flat = useFlatFor(state.key);
   const name = flat ? NOTE_NAMES_FLAT[state.round.targetPc] : NOTE_NAMES[state.round.targetPc];
-  return state.answerType === 'name' ? name : ('grau ' + state.round.targetDeg);
+  return state.answerType === 'name' ? name : ('grau ' + state.round.targetDegLabel);
 }
 
 function renderGuessMode(){
@@ -730,27 +771,23 @@ function renderGuessMode(){
 
   const flat = useFlatFor(state.key);
   const highlightSet = new Set(state.round.highlightedPositions.map(p => p.stringIdx+'_'+p.fret));
-  // Ao exibir, só desenhamos as posições da escala DENTRO da janela visível atual.
   const positions = allScalePositions(geo.minFret, geo.maxFret);
 
   positions.forEach(p => {
     const x = p.fret===0 ? geo.leftPad - 14 : fretX(geo,p.fret) - geo.fretW/2;
     const y = stringY(geo, p.stringIdx);
     const isHighlighted = highlightSet.has(p.stringIdx+'_'+p.fret);
-    const r = 13;
+    const r = 14;
 
     if (state.round.solved){
-      const color = colorForDegree(p.deg);
+      const color = colorForDegree(p.degNum);
       const dot = el('circle',{cx:x, cy:y, r, class:'note-dot', fill:color, stroke:'rgba(0,0,0,.3)', 'stroke-width':1});
       svg.appendChild(dot);
       const txt = el('text',{x, y, class:'note-label on-dot'});
-      
-      // ALTERAÇÃO AQUI: Em vez de usar state.labelMode, agora usamos state.answerType
-      txt.textContent = state.answerType === 'name' ? noteNameFromMidi(p.midi, flat) : p.deg;
-      
+      txt.textContent = state.answerType === 'name' ? noteNameFromMidi(p.midi, flat) : p.degLabel;
       svg.appendChild(txt);
     } else if (isHighlighted){
-      const color = colorForDegree(p.deg);
+      const color = colorForDegree(p.degNum);
       const dot = el('circle',{cx:x, cy:y, r:r+2, class:'note-dot highlighted', fill:color, style:'color:'+color});
       svg.appendChild(dot);
     } else {
@@ -759,6 +796,28 @@ function renderGuessMode(){
     }
   });
 }
+
+/* ============================================================
+   EVENTOS GLOBAIS DE TECLADO (Espaço e Números)
+   ============================================================ */
+window.addEventListener('keydown', (e) => {
+  // Ignora teclas se o usuário estiver digitando/clicando em selects ou inputs das configurações
+  if (document.activeElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+    return;
+  }
+  
+  if (state.mode === 'guess') {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      startNewRound();
+    } else if (e.key >= '1' && e.key <= '7') {
+      const num = parseInt(e.key, 10);
+      const scaleDef = SCALES[state.scale];
+      const pc = (state.key + scaleDef.intervals[num - 1]) % 12;
+      submitAnswer({ type: state.answerType, pc });
+    }
+  }
+});
 
 /* ============================================================
    RENDER GERAL
@@ -772,13 +831,6 @@ function render(){
 }
 
 /* init */
-window.addEventListener('keydown', (e) => {
-  if (e.code === 'Space' && state.mode === 'guess') {
-    e.preventDefault(); 
-    startNewRound();
-  }
-});
-
 document.documentElement.setAttribute('data-theme','dark');
 guessOptsFieldset.style.display = 'none';
 window.addEventListener('resize', render);
