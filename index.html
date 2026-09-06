@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mapa do Braço — Baixo</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎸</text></svg>">
+<style>
+/* ============================================================
+   DESIGN TOKENS E TEMA (CLARO / ESCURO) — herdado do app irmão
+   ============================================================ */
+:root {
+  --bg-0: #0f1216; --bg-1: #171b21; --bg-2: #1e232b; --bg-3: #262c36;
+  --line: #323a46; --text-0: #e9ecf1; --text-1: #aab2c0; --text-2: #707886;
+
+  --primary: #276112;
+  --primary-glow: #4b9e28;
+  --secondary: #d97706;
+  --secondary-dim: #b45309;
+  --red: #e35b5b; --focus: #7fb3ff;
+  --staff: #8a93a3;
+
+  --grad-bg: radial-gradient(1200px 600px at 15% -10%, #1b212b 0%, transparent 60%);
+  --transport-grad: linear-gradient(180deg, var(--bg-1), var(--bg-0));
+  --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  /* cores por grau (1..7), tema escuro */
+  --deg-1: #d97706; /* tônica sempre laranja */
+  --deg-2: #4f8fd9;
+  --deg-3: #4bbf7a;
+  --deg-4: #c959c9;
+  --deg-5: #e35b5b;
+  --deg-6: #4bc7c7;
+  --deg-7: #b7b34b;
+  --neutral-dot: #4a5162;
+}
+
+[data-theme="light"] {
+  --bg-0: #f4f6f8; --bg-1: #ffffff; --bg-2: #eef1f5; --bg-3: #e2e8f0;
+  --line: #cbd5e1; --text-0: #0f172a; --text-1: #334155; --text-2: #64748b;
+  --primary: #276112; --primary-glow: #276112;
+  --secondary: #d97706; --secondary-dim: #b45309;
+  --red: #dc2626; --focus: #3b82f6;
+  --staff: #000000;
+  --grad-bg: none;
+  --neutral-dot: #b6bfcc;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; background-color: var(--bg-0); background-image: var(--grad-bg); color: var(--text-0); font-family: var(--font-body); overflow: hidden; transition: background-color .3s ease, color .3s ease; }
+button, input, select { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+input[type=number] { -moz-appearance: textfield; }
+
+#app { display: grid; grid-template-columns: 1fr; grid-template-rows: 100vh; height: 100vh; }
+
+#settings-overlay { display:block; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:99; opacity:0; pointer-events:none; transition:opacity .3s ease; }
+#settings-overlay.open { opacity:1; pointer-events:auto; }
+
+#settings { position:fixed; top:0; bottom:0; left:0; width:360px; max-width:90vw; background:var(--bg-1); border-right:1px solid var(--line); overflow-y:auto; padding:18px 16px 40px; z-index:100; transform:translateX(-100%); transition:transform .3s cubic-bezier(.4,0,.2,1); box-shadow:0 0 25px rgba(0,0,0,.4); }
+#settings.open { transform:translateX(0); }
+
+.brand-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.brand { display:flex; align-items:baseline; gap:8px; }
+.brand .dot { width:9px; height:9px; border-radius:50%; background:var(--secondary); box-shadow:0 0 8px 1px var(--secondary); }
+.brand h1 { font-family:var(--font-display); font-size:16.5px; font-weight:600; letter-spacing:.2px; margin:0; color:var(--text-0); }
+.close-btn { background:transparent; border:none; color:var(--text-1); font-size:24px; cursor:pointer; padding:0 4px; border-radius:4px; }
+.close-btn:hover { color:var(--text-0); background:var(--bg-2); }
+
+fieldset { border:1px solid var(--line); border-radius:10px; margin:0 0 12px; padding:12px 12px 14px; background:var(--bg-2); }
+legend { font-family:var(--font-display); font-size:11px; text-transform:uppercase; letter-spacing:1.3px; color:var(--secondary); padding:0 6px; }
+.row { display:flex; align-items:center; gap:8px; margin:7px 0; flex-wrap:wrap; }
+.col { display:flex; flex-direction:column; gap:8px; margin:7px 0; }
+.row.between { justify-content:space-between; }
+label.check { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text-1); cursor:pointer; user-select:none; }
+label.check input { accent-color:var(--secondary); width:15px; height:15px; }
+label.field-label { font-size:12px; color:var(--text-1); min-width:auto; }
+select, input[type=number], input[type=text] { background:var(--bg-3); color:var(--text-0); border:1px solid var(--line); border-radius:6px; padding:5px 7px; font-size:13px; }
+select:hover, input:hover { border-color:#465064; }
+input[type=range] { accent-color:var(--secondary); width:100%; cursor:pointer; }
+.hint { font-size:11px; color:var(--text-2); margin-top:4px; line-height:1.4; }
+
+.pillrow { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+.pill { background:var(--bg-3); color:var(--text-1); border:1px solid var(--line); border-radius:12px; padding:4px 12px; font-size:11.5px; font-family:var(--font-display); font-weight:600; cursor:pointer; user-select:none; transition:all .2s; }
+.pill:hover { border-color:var(--text-2); color:var(--text-0); }
+.pill.active { background:var(--secondary); color:#000; border-color:var(--secondary-dim); }
+
+#main { position:relative; display:flex; flex-direction:column; background-color:var(--bg-0); min-width:0; }
+#transport { display:flex; align-items:center; gap:14px; padding:14px 22px; border-bottom:1px solid var(--line); background:var(--transport-grad); flex-wrap:wrap; z-index:10; }
+
+.transport-btn { display:flex; align-items:center; justify-content:center; gap:8px; border:none; border-radius:8px; font-family:var(--font-display); font-weight:700; font-size:14px; height:36px; padding:0 18px; cursor:pointer; letter-spacing:.3px; line-height:1; transition:all .2s; }
+.transport-btn * { pointer-events:none; }
+.btn-green { background:var(--primary); color:#fff; box-shadow:0 0 0 1px var(--primary-glow), 0 4px 14px -4px rgba(39,97,18,.5); }
+.btn-orange { background:var(--secondary); color:#000; box-shadow:0 0 0 1px var(--secondary-dim), 0 4px 14px -4px rgba(217,119,6,.5); }
+.btn-green:active:not(:disabled), .btn-orange:active:not(:disabled) { transform:translateY(1px); }
+
+.action-btn { display:flex; align-items:center; gap:6px; background:var(--bg-2); border:1px solid var(--line); color:var(--text-1); border-radius:7px; font-size:12.5px; cursor:pointer; height:36px; padding:0 14px; transition:background .2s, color .2s; }
+.action-btn:hover { background:var(--bg-3); color:var(--text-0); }
+.action-btn * { pointer-events:none; }
+.action-btn.on { color:var(--text-0); border-color:var(--secondary-dim); }
+
+.mode-switch { display:flex; gap:6px; background:var(--bg-2); border:1px solid var(--line); border-radius:8px; padding:3px; }
+.mode-btn { border:none; background:transparent; color:var(--text-1); font-family:var(--font-display); font-weight:600; font-size:12.5px; padding:7px 14px; border-radius:6px; cursor:pointer; transition:all .2s; }
+.mode-btn.active { background:var(--secondary); color:#000; }
+.mode-btn:hover:not(.active) { color:var(--text-0); }
+
+.spacer { flex:1; }
+#status { font-size:11.5px; color:var(--text-2); font-family:var(--font-mono); min-width:150px; text-align:right; }
+
+/* ---------------- ÁREA DO BRAÇO ---------------- */
+#board-wrap { position:relative; flex:1; overflow:auto; background: var(--bg-0); padding: 40px 30px; display:flex; flex-direction:column; }
+#feedback-bar { min-height: 46px; display:flex; align-items:center; justify-content:center; gap: 14px; font-family: var(--font-display); font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+#feedback-bar .msg { color: var(--text-1); }
+#feedback-bar .msg.correct { color: var(--primary-glow); }
+#feedback-bar .msg.wrong { color: var(--red); }
+
+#fretboard-container { position:relative; margin: auto 0; width: 100%; }
+#fretboard-svg { width: 100%; height: auto; display:block; overflow: visible; }
+
+.fret-num-label { font-family: var(--font-mono); font-size: 12px; fill: var(--text-2); }
+.fret-num-label.marker { fill: var(--secondary); font-weight: 700; }
+.nut { stroke: var(--text-0); }
+.fret-line { stroke: var(--line); }
+.string-line { stroke: var(--staff); }
+.inlay { fill: var(--text-2); opacity: .35; }
+
+.note-dot { cursor: default; transition: r .15s ease; }
+.note-dot.neutral { fill: var(--neutral-dot); stroke: var(--line); stroke-width: 1; }
+.note-dot.highlighted { stroke: #fff; stroke-width: 2; filter: drop-shadow(0 0 6px currentColor); }
+.note-label { font-family: var(--font-mono); font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none; user-select:none; }
+.note-label.on-dot { fill: #08090b; font-size: 11px; }
+[data-theme="light"] .note-label.on-dot { fill: #fff; }
+
+/* ---------------- Painel de resposta (modo Adivinhe) ---------------- */
+#answer-panel { border-top: 1px solid var(--line); background: var(--bg-1); padding: 14px 22px 18px; display:none; flex-direction:column; gap:10px; }
+#answer-panel.show { display:flex; }
+.answer-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; }
+.answer-toggle { display:flex; gap:6px; background:var(--bg-2); border:1px solid var(--line); border-radius:8px; padding:3px; }
+.note-btn-grid { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; max-width: 700px; }
+.note-btn { background:var(--bg-3); color:var(--text-0); border:1px solid var(--line); border-radius:8px; padding:8px 14px; font-family:var(--font-display); font-weight:700; font-size:14px; cursor:pointer; transition:all .15s; min-width: 48px; }
+.note-btn:hover { border-color: var(--secondary); background: var(--bg-2); }
+.note-btn:active { transform: translateY(1px); }
+.attempts-badge { font-family: var(--font-mono); font-size: 11px; color: var(--text-2); }
+
+#welcome-screen { position:absolute; top: 0; left: 0; right: 0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; text-align:center; color:var(--text-1); z-index:2; transition:opacity .3s; padding: 28px 20px 0; pointer-events: none; }
+#welcome-screen h2 { font-family:var(--font-display); color:var(--text-0); margin-bottom:8px; font-size:20px; }
+#welcome-screen p { font-size:14px; max-width: 460px; }
+#welcome-screen.hidden { display:none; }
+
+::-webkit-scrollbar { width:9px; height:9px; }
+::-webkit-scrollbar-track { background:var(--bg-1); }
+::-webkit-scrollbar-thumb { background:var(--bg-3); border-radius:5px; }
+
+@media (max-width: 720px) {
+  #transport { padding: 10px 12px; gap: 8px; }
+  #board-wrap { padding: 20px 10px; }
+  .fret-num-label { font-size: 9px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="settings-overlay"></div>
+
+  <!-- ============================== SIDEBAR / OPÇÕES ============================== -->
+  <aside id="settings">
+    <div class="brand-header">
+      <div class="brand"><span class="dot"></span><div><h1>Mapa do Braço — Baixo</h1></div></div>
+      <div style="display:flex; gap:8px;">
+        <button id="themeToggle" class="action-btn" style="padding:0 8px;" title="Alternar Tema">☀️</button>
+        <button class="close-btn" id="closeSettingsBtn">&times;</button>
+      </div>
+    </div>
+
+    <fieldset>
+      <legend>Tonalidade e Escala</legend>
+      <div class="row">
+        <label class="field-label" for="keySelect">Tônica</label>
+        <select id="keySelect"></select>
+      </div>
+      <div class="row">
+        <label class="field-label" for="scaleSelect">Escala</label>
+        <select id="scaleSelect">
+          <option value="major">Maior (Jônio)</option>
+          <option value="natural_minor">Menor Natural (Eólio)</option>
+          <option value="harmonic_minor">Menor Harmônica</option>
+          <option value="melodic_minor">Menor Melódica</option>
+        </select>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Rótulo das Notas</legend>
+      <div class="pillrow" id="labelModeRow">
+        <span class="pill active" data-label="name">Nome da nota</span>
+        <span class="pill" data-label="degree">Grau (número)</span>
+      </div>
+      <div class="hint">Define como as notas aparecem no modo Visualização e após acertar no modo Adivinhe.</div>
+    </fieldset>
+
+    <fieldset id="guessOptsFieldset">
+      <legend>Opções — Adivinhe a Nota</legend>
+      <div class="row between">
+        <label class="field-label">Casas visíveis</label>
+        <span id="fretCountReadout" class="hint" style="margin:0; color:var(--secondary); font-family:var(--font-mono);">12</span>
+      </div>
+      <div class="row"><input type="range" id="fretCountSlider" min="2" max="20" step="1" value="12"></div>
+
+      <div class="row" style="margin-top:10px;">
+        <label class="field-label">Destaque</label>
+        <select id="highlightMode">
+          <option value="single">Apenas 1 posição</option>
+          <option value="allpositions">A nota em todas as posições</option>
+        </select>
+      </div>
+      <div class="hint" id="highlightHint">Uma única casa/corda é destacada; as demais ocorrências da mesma nota permanecem cinzas.</div>
+    </fieldset>
+
+    <fieldset id="stringsFieldset">
+      <legend>Cordas do Contrabaixo</legend>
+      <div class="pillrow" id="stringsRow">
+        <span class="pill" data-string="B">B</span>
+        <span class="pill active" data-string="E">E</span>
+        <span class="pill active" data-string="A">A</span>
+        <span class="pill active" data-string="D">D</span>
+        <span class="pill active" data-string="G">G</span>
+        <span class="pill" data-string="C">C</span>
+      </div>
+      <div class="hint" style="font-size:10px; margin-bottom:8px;">Determina o desenho matemático das posições no braço.</div>
+      <label class="check"><input type="checkbox" id="flipStringsToggle"> Inverter ordem (grave em cima)</label>
+      <div class="hint" style="font-size:10px;">Padrão: corda E (grave) embaixo, G (aguda) em cima.</div>
+    </fieldset>
+
+  </aside>
+
+  <!-- ============================== ÁREA PRINCIPAL ============================== -->
+  <main id="main">
+    <div id="transport">
+      <div class="mode-switch">
+        <button class="mode-btn active" id="modeVisual" data-mode="visual">Visualização</button>
+        <button class="mode-btn" id="modeGuess" data-mode="guess">Adivinhe a Nota</button>
+      </div>
+
+      <button class="action-btn" id="openSettingsBtn" style="font-weight:600; color:var(--text-0);">⚙️ Opções</button>
+
+      <div class="spacer" style="flex:.2"></div>
+
+      <button class="transport-btn btn-orange" id="newRoundBtn" style="display:none;">🎲 Nova Nota</button>
+
+      <div class="spacer"></div>
+      <div id="status">pronto</div>
+    </div>
+
+    <div id="board-wrap">
+
+      <div id="welcome-screen">
+        <h2>Escolha um <span style="color:var(--primary-glow)">modo</span> acima</h2>
+        <p>No modo <strong>Visualização</strong> você enxerga todas as notas da escala escolhida no braço. No modo <strong>Adivinhe a Nota</strong>, uma posição é destacada e você precisa identificá-la de ouvido... ou melhor, de olho!</p>
+      </div>
+
+      <div id="feedback-bar"></div>
+
+      <div id="fretboard-container">
+        <svg id="fretboard-svg" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+
+    </div>
+
+    <div id="answer-panel">
+      <div class="answer-row">
+        <div class="answer-toggle" id="answerTypeToggle">
+          <button class="mode-btn active" data-atype="name">Responder por Nome</button>
+          <button class="mode-btn" data-atype="degree">Responder por Grau</button>
+        </div>
+        <span class="attempts-badge" id="attemptsBadge">tentativas: 0</span>
+      </div>
+      <div class="answer-row">
+        <div class="note-btn-grid" id="noteBtnGrid"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   DADOS MUSICAIS
+   ============================================================ */
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NOTE_NAMES_FLAT = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+
+const SCALE_INTERVALS = {
+  major:          [0,2,4,5,7,9,11],
+  natural_minor:  [0,2,3,5,7,8,10],
+  harmonic_minor: [0,2,3,5,7,8,11],
+  melodic_minor:  [0,2,3,5,7,9,11],
+};
+
+// cordas disponíveis (nota solta -> índice cromático 0-11, oitava relativa p/ ordenação)
+const STRING_DEFS = {
+  B: { name:'B', midi: 23 }, // Si grave (5ª corda extra grave)
+  E: { name:'E', midi: 28 },
+  A: { name:'A', midi: 33 },
+  D: { name:'D', midi: 38 },
+  G: { name:'G', midi: 43 },
+  C: { name:'C', midi: 48 }, // Dó agudo (5ª corda extra aguda)
+};
+const STRING_ORDER = ['B','E','A','D','G','C']; // grave -> agudo (topo->baixo no desenho: C em cima)
+
+function pcOf(midi){ return ((midi % 12) + 12) % 12; }
+function noteNameFromMidi(midi, useFlat){
+  const pc = pcOf(midi);
+  return useFlat ? NOTE_NAMES_FLAT[pc] : NOTE_NAMES[pc];
+}
+
+// Tonalidades que tradicionalmente usam bemóis
+const FLAT_KEYS = new Set(['F','Bb','Eb','Ab','Db','Gb','Cb']);
+
+const KEY_LIST = [
+  {pc:0, sharp:'C', flat:'C'},
+  {pc:1, sharp:'C#', flat:'Db'},
+  {pc:2, sharp:'D', flat:'D'},
+  {pc:3, sharp:'D#', flat:'Eb'},
+  {pc:4, sharp:'E', flat:'E'},
+  {pc:5, sharp:'F', flat:'F'},
+  {pc:6, sharp:'F#', flat:'Gb'},
+  {pc:7, sharp:'G', flat:'G'},
+  {pc:8, sharp:'G#', flat:'Ab'},
+  {pc:9, sharp:'A', flat:'A'},
+  {pc:10,sharp:'A#', flat:'Bb'},
+  {pc:11,sharp:'B', flat:'B'},
+];
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+const MAX_FRET = 24; // extensão total do braço usada para GERAÇÃO no modo Adivinhe
+
+const state = {
+  theme: 'dark',
+  mode: 'visual', // 'visual' | 'guess'
+  key: 0, // pitch class da tônica
+  scale: 'major',
+  labelMode: 'name', // 'name' | 'degree'
+  strings: ['E','A','D','G'], // ordem grave->agudo, subset de STRING_ORDER
+  flipStrings: false, // false = grave embaixo (padrão), true = grave em cima
+  fretCount: 12, // quantas casas ficam VISÍVEIS por vez no modo Adivinhe
+  highlightMode: 'single', // 'single' | 'allpositions'
+  answerType: 'name', // 'name' | 'degree'
+
+  // rodada atual do modo Adivinhe
+  round: null, // { targetPc, targetDeg, anchorFret, highlightedPositions, attempts, solved }
+};
+
+function useFlatFor(keyPc){
+  const k = KEY_LIST[keyPc];
+  return FLAT_KEYS.has(k.flat) && k.flat !== k.sharp ? true : (k.flat.includes('b'));
+}
+
+function scalePitchClasses(){
+  const intervals = SCALE_INTERVALS[state.scale];
+  return intervals.map(i => (state.key + i) % 12);
+}
+
+function degreeOfPc(pc){
+  const pcs = scalePitchClasses();
+  const idx = pcs.indexOf(pc);
+  return idx === -1 ? null : idx + 1; // 1-based
+}
+
+/* ============================================================
+   UI: SIDEBAR
+   ============================================================ */
+const keySelect = document.getElementById('keySelect');
+KEY_LIST.forEach((k, i) => {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = k.sharp === k.flat ? k.sharp : `${k.sharp} / ${k.flat}`;
+  keySelect.appendChild(opt);
+});
+keySelect.value = 0;
+
+const scaleSelect = document.getElementById('scaleSelect');
+const labelModeRow = document.getElementById('labelModeRow');
+const stringsRow = document.getElementById('stringsRow');
+const fretCountSlider = document.getElementById('fretCountSlider');
+const fretCountReadout = document.getElementById('fretCountReadout');
+const highlightModeSel = document.getElementById('highlightMode');
+const highlightHint = document.getElementById('highlightHint');
+const guessOptsFieldset = document.getElementById('guessOptsFieldset');
+const answerTypeToggle = document.getElementById('answerTypeToggle');
+const answerPanel = document.getElementById('answer-panel');
+const noteBtnGrid = document.getElementById('noteBtnGrid');
+const attemptsBadge = document.getElementById('attemptsBadge');
+const feedbackBar = document.getElementById('feedback-bar');
+const newRoundBtn = document.getElementById('newRoundBtn');
+const welcomeScreen = document.getElementById('welcome-screen');
+const statusEl = document.getElementById('status');
+
+keySelect.addEventListener('change', () => { state.key = parseInt(keySelect.value,10); render(); });
+scaleSelect.addEventListener('change', () => { state.scale = scaleSelect.value; render(); });
+
+labelModeRow.querySelectorAll('.pill').forEach(p => {
+  p.addEventListener('click', () => {
+    labelModeRow.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+    p.classList.add('active');
+    state.labelMode = p.dataset.label;
+    render();
+  });
+});
+
+stringsRow.querySelectorAll('.pill').forEach(p => {
+  p.addEventListener('click', () => {
+    const s = p.dataset.string;
+    p.classList.toggle('active');
+    const activeSet = new Set(Array.from(stringsRow.querySelectorAll('.pill.active')).map(x=>x.dataset.string));
+    // manter no mínimo 1 corda ativa
+    if (activeSet.size === 0) { p.classList.add('active'); activeSet.add(s); }
+    state.strings = STRING_ORDER.filter(sn => activeSet.has(sn));
+    render();
+  });
+});
+
+const flipStringsToggle = document.getElementById('flipStringsToggle');
+flipStringsToggle.addEventListener('change', () => {
+  state.flipStrings = flipStringsToggle.checked;
+  render();
+});
+
+fretCountSlider.addEventListener('input', () => {
+  state.fretCount = parseInt(fretCountSlider.value,10);
+  fretCountReadout.textContent = state.fretCount;
+  // Recalcula apenas a JANELA em torno da nota já sorteada — não gera uma nota nova.
+  if (state.mode === 'guess' && state.round){
+    const { minFret, maxFret } = windowAroundFret(state.round.anchorFret);
+    state.round.windowMin = minFret;
+    state.round.windowMax = maxFret;
+  }
+  render();
+});
+
+highlightModeSel.addEventListener('change', () => {
+  state.highlightMode = highlightModeSel.value;
+  highlightHint.textContent = state.highlightMode === 'single'
+    ? 'Uma única casa/corda é destacada; as demais ocorrências da mesma nota permanecem cinzas.'
+    : 'Todas as ocorrências da nota-alvo no braço aparecem destacadas ao mesmo tempo.';
+  if (state.mode === 'guess') startNewRound();
+});
+
+answerTypeToggle.querySelectorAll('.mode-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    answerTypeToggle.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    state.answerType = b.dataset.atype;
+    buildAnswerButtons();
+  });
+});
+
+newRoundBtn.addEventListener('click', startNewRound);
+
+/* Mode switch */
+document.getElementById('modeVisual').addEventListener('click', () => setMode('visual'));
+document.getElementById('modeGuess').addEventListener('click', () => setMode('guess'));
+
+function setMode(mode){
+  state.mode = mode;
+  document.getElementById('modeVisual').classList.toggle('active', mode==='visual');
+  document.getElementById('modeGuess').classList.toggle('active', mode==='guess');
+  guessOptsFieldset.style.display = mode === 'guess' ? '' : 'none';
+  newRoundBtn.style.display = mode === 'guess' ? '' : 'none';
+  answerPanel.classList.toggle('show', mode === 'guess');
+  welcomeScreen.classList.add('hidden');
+  feedbackBar.innerHTML = '';
+  if (mode === 'guess') {
+    startNewRound();
+  } else {
+    state.round = null;
+    render();
+  }
+  statusEl.textContent = mode === 'visual' ? 'visualizando escala' : 'adivinhe a nota';
+}
+
+/* Sidebar open/close */
+const settingsPanel = document.getElementById('settings');
+const settingsOverlay = document.getElementById('settings-overlay');
+document.getElementById('openSettingsBtn').addEventListener('click', () => { settingsPanel.classList.add('open'); settingsOverlay.classList.add('open'); });
+document.getElementById('closeSettingsBtn').addEventListener('click', closeSettings);
+settingsOverlay.addEventListener('click', closeSettings);
+function closeSettings(){ settingsPanel.classList.remove('open'); settingsOverlay.classList.remove('open'); }
+
+/* Theme toggle */
+const themeToggle = document.getElementById('themeToggle');
+themeToggle.addEventListener('click', () => {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', state.theme === 'light' ? 'light' : 'dark');
+  themeToggle.textContent = state.theme === 'light' ? '🌙' : '☀️';
+  render();
+});
+
+/* ============================================================
+   RENDER DO BRAÇO (SVG)
+   ============================================================ */
+const svg = document.getElementById('fretboard-svg');
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function el(tag, attrs){
+  const e = document.createElementNS(SVG_NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+const DEGREE_VARS = ['--deg-1','--deg-2','--deg-3','--deg-4','--deg-5','--deg-6','--deg-7'];
+function colorForDegree(deg){
+  return getComputedStyle(document.documentElement).getPropertyValue(DEGREE_VARS[deg-1]).trim();
+}
+
+// geo.minFret / geo.maxFret definem a JANELA VISÍVEL (inclusive). A casa 0 (solta)
+// só aparece desenhada com o "nut" quando minFret === 0.
+function fretboardGeometry(minFret, maxFret){
+  if (minFret === undefined) minFret = 0;
+  if (maxFret === undefined) maxFret = state.fretCount;
+  const nFretsVisible = maxFret - minFret;
+  const nStrings = state.strings.length;
+  const showOpenString = minFret === 0;
+  const leftPad = showOpenString ? 46 : 30;
+  const rightPad = 30, topPad = 26, bottomPad = 26;
+  const width = 1000;
+  const boardW = width - leftPad - rightPad;
+  const fretW = boardW / nFretsVisible;
+  const boardH = Math.max(140, (nStrings - 1) * 40);
+  const height = topPad + boardH + bottomPad;
+  return { minFret, maxFret, nFretsVisible, nStrings, showOpenString, leftPad, rightPad, topPad, bottomPad, width, boardW, fretW, boardH, height };
+}
+
+function fretX(geo, fret){ return geo.leftPad + geo.fretW * (fret - geo.minFret); }
+function stringDrawIndex(sIdx, nStrings){
+  // sIdx é o índice em state.strings (0 = mais grave da seleção).
+  // Padrão (flipStrings=false): grave embaixo -> índice de desenho maior = mais embaixo.
+  // Então a linha desenhada de cima pra baixo deve ir da mais aguda pra mais grave.
+  return state.flipStrings ? sIdx : (nStrings - 1 - sIdx);
+}
+function stringY(geo, sIdx){
+  const drawIdx = stringDrawIndex(sIdx, geo.nStrings);
+  if (geo.nStrings === 1) return geo.topPad + geo.boardH/2;
+  return geo.topPad + (geo.boardH * drawIdx / (geo.nStrings - 1));
+}
+
+const MARKER_FRETS = new Set([3,5,7,9,15,17,19,21]);
+const DOUBLE_MARKER_FRETS = new Set([12,24]);
+
+function drawFretboardBase(geo){
+  svg.setAttribute('viewBox', `0 0 ${geo.width} ${geo.height}`);
+  const stringStartX = geo.showOpenString ? geo.leftPad - 14 : geo.leftPad;
+  // fret lines
+  for (let f=geo.minFret; f<=geo.maxFret; f++){
+    const x = fretX(geo,f);
+    const line = el('line',{x1:x,y1:geo.topPad-10,x2:x,y2:geo.topPad+geo.boardH+10,
+      class: f===0 ? 'nut':'fret-line', 'stroke-width': f===0?4:1.5});
+    svg.appendChild(line);
+    if (f>geo.minFret){
+      const lbl = el('text',{x:x-geo.fretW/2, y: geo.topPad+geo.boardH+22, class:'fret-num-label'+(MARKER_FRETS.has(f)||DOUBLE_MARKER_FRETS.has(f)?' marker':''), 'text-anchor':'middle'});
+      lbl.textContent = f;
+      svg.appendChild(lbl);
+    }
+  }
+  // inlays
+  for (let f=geo.minFret+1; f<=geo.maxFret; f++){
+    const cx = fretX(geo,f) - geo.fretW/2;
+    const cy = geo.topPad + geo.boardH/2;
+    if (DOUBLE_MARKER_FRETS.has(f)){
+      svg.appendChild(el('circle',{cx, cy: geo.topPad+geo.boardH*0.3, r:5, class:'inlay'}));
+      svg.appendChild(el('circle',{cx, cy: geo.topPad+geo.boardH*0.7, r:5, class:'inlay'}));
+    } else if (MARKER_FRETS.has(f)){
+      svg.appendChild(el('circle',{cx, cy, r:5, class:'inlay'}));
+    }
+  }
+  // strings
+  for (let s=0; s<geo.nStrings; s++){
+    const y = stringY(geo, s);
+    const thickness = 1.4 + s * 0.6; // s=0 é a mais grave da seleção -> mais grossa
+    svg.appendChild(el('line',{x1:stringStartX, y1:y, x2:geo.leftPad+geo.boardW, y2:y, class:'string-line', 'stroke-width': thickness}));
+    // nome da corda: à esquerda da pestana quando visível, senão à esquerda da 1ª casa exibida
+    const labelX = geo.showOpenString ? geo.leftPad - 24 : geo.leftPad - 12;
+    const label = el('text',{x:labelX, y, class:'fret-num-label', 'text-anchor':'middle', 'dominant-baseline':'central'});
+    label.textContent = STRING_DEFS[state.strings[s]].name;
+    svg.appendChild(label);
+  }
+}
+
+function midiAt(stringIdx, fret){
+  const sName = state.strings[stringIdx];
+  return STRING_DEFS[sName].midi + fret;
+}
+
+function renderVisualMode(){
+  svg.innerHTML = '';
+  const geo = fretboardGeometry(0, state.fretCount);
+  drawFretboardBase(geo);
+  const flat = useFlatFor(state.key);
+
+  for (let s=0; s<geo.nStrings; s++){
+    const y = stringY(geo, s);
+    for (let f=geo.minFret; f<=geo.maxFret; f++){
+      const midi = midiAt(s,f);
+      const pc = pcOf(midi);
+      const deg = degreeOfPc(pc);
+      if (deg === null) continue;
+      const x = f===0 ? geo.leftPad - 14 : fretX(geo,f) - geo.fretW/2;
+      const color = colorForDegree(deg);
+      const r = 13;
+      const dot = el('circle',{cx:x, cy:y, r, class:'note-dot', fill:color, stroke:'rgba(0,0,0,.3)', 'stroke-width':1});
+      svg.appendChild(dot);
+      const txt = el('text',{x, y, class:'note-label on-dot'});
+      txt.textContent = state.labelMode === 'name' ? noteNameFromMidi(midi, flat) : deg;
+      svg.appendChild(txt);
+    }
+  }
+}
+
+/* ---------------- Modo Adivinhe ---------------- */
+// Busca posições da escala em TODO o braço (0..MAX_FRET), independente da janela visível.
+function allScalePositions(minFret, maxFret){
+  if (minFret === undefined) minFret = 0;
+  if (maxFret === undefined) maxFret = MAX_FRET;
+  const nStrings = state.strings.length;
+  const positions = [];
+  for (let s=0; s<nStrings; s++){
+    for (let f=minFret; f<=maxFret; f++){
+      const midi = midiAt(s,f);
+      const pc = pcOf(midi);
+      const deg = degreeOfPc(pc);
+      if (deg !== null) positions.push({stringIdx:s, fret:f, midi, pc, deg});
+    }
+  }
+  return positions;
+}
+
+// Calcula a janela [minFret, maxFret] de tamanho state.fretCount que melhor
+// centraliza a casa-alvo, sem nunca sair do intervalo [0, MAX_FRET].
+function windowAroundFret(targetFret){
+  const size = state.fretCount;
+  let minFret = Math.round(targetFret - size/2);
+  minFret = Math.max(0, Math.min(minFret, MAX_FRET - size));
+  const maxFret = minFret + size;
+  return { minFret, maxFret };
+}
+
+function startNewRound(){
+  // Geração sempre considera o braço INTEIRO, não a janela visível atual.
+  const positions = allScalePositions(0, MAX_FRET);
+  if (positions.length === 0){ return; }
+  const chosen = positions[Math.floor(Math.random()*positions.length)];
+  let highlightedPositions;
+  if (state.highlightMode === 'single'){
+    highlightedPositions = [chosen];
+  } else {
+    highlightedPositions = positions.filter(p => p.pc === chosen.pc);
+  }
+  const { minFret, maxFret } = windowAroundFret(chosen.fret);
+  state.round = {
+    targetPc: chosen.pc,
+    targetDeg: chosen.deg,
+    anchorFret: chosen.fret,
+    windowMin: minFret,
+    windowMax: maxFret,
+    highlightedPositions,
+    attempts: 0,
+    solved: false,
+  };
+  feedbackBar.innerHTML = '<span class="msg">Qual é a nota destacada?</span>';
+  attemptsBadge.textContent = 'tentativas: 0';
+  buildAnswerButtons();
+  render();
+}
+
+function buildAnswerButtons(){
+  noteBtnGrid.innerHTML = '';
+  const flat = useFlatFor(state.key);
+  if (state.answerType === 'name'){
+    NOTE_NAMES.forEach((_, pc) => {
+      const label = flat ? NOTE_NAMES_FLAT[pc] : NOTE_NAMES[pc];
+      const btn = document.createElement('button');
+      btn.className = 'note-btn';
+      btn.textContent = label;
+      btn.addEventListener('click', () => submitAnswer({type:'name', pc}));
+      noteBtnGrid.appendChild(btn);
+    });
+  } else {
+    const pcs = scalePitchClasses();
+    pcs.forEach((pc, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'note-btn';
+      btn.textContent = (i+1);
+      btn.addEventListener('click', () => submitAnswer({type:'degree', pc}));
+      noteBtnGrid.appendChild(btn);
+    });
+  }
+}
+
+function submitAnswer(answer){
+  if (!state.round || state.round.solved) return;
+  state.round.attempts++;
+  attemptsBadge.textContent = 'tentativas: ' + state.round.attempts;
+  if (answer.pc === state.round.targetPc){
+    state.round.solved = true;
+    feedbackBar.innerHTML = '<span class="msg correct">✓ Correto! Era ' + describeTarget() + '.</span>';
+    render();
+  } else {
+    feedbackBar.innerHTML = '<span class="msg wrong">✗ Não é essa. Tente novamente.</span>';
+  }
+}
+
+function describeTarget(){
+  const flat = useFlatFor(state.key);
+  const name = flat ? NOTE_NAMES_FLAT[state.round.targetPc] : NOTE_NAMES[state.round.targetPc];
+  return state.answerType === 'name' ? name : ('grau ' + state.round.targetDeg);
+}
+
+function renderGuessMode(){
+  svg.innerHTML = '';
+  if (!state.round){
+    const geo = fretboardGeometry(0, state.fretCount);
+    drawFretboardBase(geo);
+    return;
+  }
+  const geo = fretboardGeometry(state.round.windowMin, state.round.windowMax);
+  drawFretboardBase(geo);
+
+  const flat = useFlatFor(state.key);
+  const highlightSet = new Set(state.round.highlightedPositions.map(p => p.stringIdx+'_'+p.fret));
+  // Ao exibir, só desenhamos as posições da escala DENTRO da janela visível atual.
+  const positions = allScalePositions(geo.minFret, geo.maxFret);
+
+  positions.forEach(p => {
+    const x = p.fret===0 ? geo.leftPad - 14 : fretX(geo,p.fret) - geo.fretW/2;
+    const y = stringY(geo, p.stringIdx);
+    const isHighlighted = highlightSet.has(p.stringIdx+'_'+p.fret);
+    const r = 13;
+
+    if (state.round.solved){
+      const color = colorForDegree(p.deg);
+      const dot = el('circle',{cx:x, cy:y, r, class:'note-dot', fill:color, stroke:'rgba(0,0,0,.3)', 'stroke-width':1});
+      svg.appendChild(dot);
+      const txt = el('text',{x, y, class:'note-label on-dot'});
+      txt.textContent = state.labelMode === 'name' ? noteNameFromMidi(p.midi, flat) : p.deg;
+      svg.appendChild(txt);
+    } else if (isHighlighted){
+      const color = colorForDegree(p.deg);
+      const dot = el('circle',{cx:x, cy:y, r:r+2, class:'note-dot highlighted', fill:color, style:'color:'+color});
+      svg.appendChild(dot);
+    } else {
+      const dot = el('circle',{cx:x, cy:y, r:r-2, class:'note-dot neutral'});
+      svg.appendChild(dot);
+    }
+  });
+}
+
+/* ============================================================
+   RENDER GERAL
+   ============================================================ */
+function render(){
+  if (state.mode === 'visual'){
+    renderVisualMode();
+  } else {
+    renderGuessMode();
+  }
+}
+
+/* init */
+document.documentElement.setAttribute('data-theme','dark');
+guessOptsFieldset.style.display = 'none';
+window.addEventListener('resize', render);
+render();
+</script>
+</body>
+</html>
