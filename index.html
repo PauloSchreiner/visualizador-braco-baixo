@@ -166,7 +166,6 @@ input[type=range] { accent-color:var(--secondary); width:100%; cursor:pointer; }
 
   <div id="settings-overlay"></div>
 
-  <!-- ============================== SIDEBAR / OPÇÕES ============================== -->
   <aside id="settings">
     <div class="brand-header">
       <div class="brand"><span class="dot"></span><div><h1>Mapa do Braço — Baixo</h1></div></div>
@@ -199,7 +198,7 @@ input[type=range] { accent-color:var(--secondary); width:100%; cursor:pointer; }
         <span class="pill active" data-label="name">Nome da nota</span>
         <span class="pill" data-label="degree">Grau (número)</span>
       </div>
-      <div class="hint">Define como as notas aparecem no modo Visualização e após acertar no modo Adivinhe.</div>
+      <div class="hint">Define como as notas aparecem no modo Visualização.</div>
     </fieldset>
 
     <fieldset id="guessOptsFieldset">
@@ -237,7 +236,6 @@ input[type=range] { accent-color:var(--secondary); width:100%; cursor:pointer; }
 
   </aside>
 
-  <!-- ============================== ÁREA PRINCIPAL ============================== -->
   <main id="main">
     <div id="transport">
       <div class="mode-switch">
@@ -746,7 +744,10 @@ function renderGuessMode(){
       const dot = el('circle',{cx:x, cy:y, r, class:'note-dot', fill:color, stroke:'rgba(0,0,0,.3)', 'stroke-width':1});
       svg.appendChild(dot);
       const txt = el('text',{x, y, class:'note-label on-dot'});
-      txt.textContent = state.labelMode === 'name' ? noteNameFromMidi(p.midi, flat) : p.deg;
+      
+      // ALTERAÇÃO AQUI: Em vez de usar state.labelMode, agora usamos state.answerType
+      txt.textContent = state.answerType === 'name' ? noteNameFromMidi(p.midi, flat) : p.deg;
+      
       svg.appendChild(txt);
     } else if (isHighlighted){
       const color = colorForDegree(p.deg);
