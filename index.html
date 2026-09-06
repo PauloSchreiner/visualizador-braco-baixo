@@ -772,6 +772,13 @@ function render(){
 }
 
 /* init */
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && state.mode === 'guess') {
+    e.preventDefault(); 
+    startNewRound();
+  }
+});
+
 document.documentElement.setAttribute('data-theme','dark');
 guessOptsFieldset.style.display = 'none';
 window.addEventListener('resize', render);
