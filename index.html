@@ -623,7 +623,7 @@ function drawFretboardBase(geo){
   }
   for (let s=0; s<geo.nStrings; s++){
     const y = stringY(geo, s);
-    const thickness = 1.4 + s * 0.6;
+    const thickness = 1.2 + (geo.nStrings - 1 - s) * 0.7;
     svg.appendChild(el('line',{x1:stringStartX, y1:y, x2:geo.leftPad+geo.boardW, y2:y, class:'string-line', 'stroke-width': thickness}));
     const labelX = geo.showOpenString ? geo.leftPad - 24 : geo.leftPad - 12;
     const label = el('text',{x:labelX, y, class:'fret-num-label', 'text-anchor':'middle', 'dominant-baseline':'central'});
